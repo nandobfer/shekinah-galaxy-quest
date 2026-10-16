@@ -5,7 +5,7 @@
 - API NestJS com Auth.js Core, Credentials e sessão JWE em cookie; sem Next.js e sem bearer JWT convencional.
 - Usuários persistidos com Mongoose: nome, e-mail normalizado com índice único, hash Argon2id, papel `admin`, status ativo, versão de sessão e timestamps.
 - Login `/login` no React/Vite; rotas protegidas usam layout com Início e Integrações, nome e logout no rodapé da sidebar. Consulte `layout.md` e `integrations.md`.
-- A tela de login reproduz a composição do Opex (card central translúcido, fundo radial, partículas conectadas, tema roxo e fonte Inter), com identidade Shekinah e e-mail/senha. `login-page.tsx` separa layout/carregamento lazy do canvas de `login-form.tsx`, que mantém contratos, mutation e sessão atuais. Não há username ou autenticação por credenciais de ambiente do Opex.
+- A tela de login reproduz a composição do Opex (card central translúcido, fundo radial, tema roxo e fonte Inter), com identidade Shekinah e e-mail/senha. O fundo de partículas virou uma galáxia espiral (braços ao redor de um núcleo, sem ligações, rotação lenta), conforme a tarefa SGQ-1. `login-page.tsx` separa layout/carregamento lazy do canvas de `login-form.tsx`, que mantém contratos, mutation e sessão atuais. Não há username ou autenticação por credenciais de ambiente do Opex.
 - Não há cadastro público, senha padrão, administrador automático, recuperação de senha ou autenticação mobile nesta entrega.
 
 ## Protocolo e autorização

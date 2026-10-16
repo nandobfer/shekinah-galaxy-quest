@@ -11,7 +11,7 @@
 ## Desenvolvimento
 
 - API: `pnpm dev:api` (porta configurável, padrão 3010).
-- Admin: `pnpm dev:admin` (padrão 5180, strictPort). Acesse a origem exata configurada em APP_ORIGIN.
+- Admin: `pnpm dev:admin` (padrão 5180, strictPort) escuta em `0.0.0.0`. A porta vem de `PORT`, com `ADMIN_PORT` como fallback, e o Compose publica a mesma porta. Acesse a origem exata configurada em APP_ORIGIN — o IP/domínio pelo qual a interface é acessada, não apenas `localhost`.
 - O proxy Vite encaminha `/api` para API_PROXY_TARGET. Nenhuma variável pública contém segredos.
 - Criar administrador: `pnpm exec tsx scripts/create-admin.ts`, na raiz, com terminal interativo. O script grava somente quando executado pelo operador.
 - Scripts locais devem reutilizar `resolveScriptMongoUri` de `scripts/helpers/mongodb-uri.ts`: converte o hostname único `mongodb` em `127.0.0.1`, sem mudar o `.env`, credenciais, porta, banco ou parâmetros. É possível informar outro nome de contêiner explicitamente ao helper. URIs externas, localhost/IP, SRV e listas de hosts de replica sets ficam intactas. A porta publicada no host precisa coincidir com a porta da URI; o helper não descobre mapeamentos Docker e não deve ser usado pela API nos contêineres.
@@ -19,10 +19,12 @@
 ## Docker Compose
 
 - Desenvolvimento containerizado: `docker compose -f docker-compose.dev.yml up --build` **somente com autorização para build/iniciar serviços**.
-- O Compose de desenvolvimento publica ADMIN_PORT em `0.0.0.0` para acesso remoto. Configure APP_ORIGIN com a URL exata do navegador; o operador deve restringir o acesso por rede/IP ou usar proxy HTTPS. Vite não é servidor de produção e login por HTTP não protege credenciais em trânsito. Mudanças de porta/origem exigem recriar os serviços; não requerem build quando somente a configuração de ambiente/Compose muda.
+- O Compose de desenvolvimento publica a porta web em `0.0.0.0` para acesso remoto. Configure APP_ORIGIN com a URL exata do navegador; o operador deve restringir o acesso por rede/IP ou usar proxy HTTPS. Vite não é servidor de produção e login por HTTP não protege credenciais em trânsito. Mudanças de porta/origem exigem recriar os serviços; não requerem build quando somente a configuração de ambiente/Compose muda.
 - Produção: `docker compose up -d --build`, também sujeito à autorização. API usa runtime tsx, sem compilação Nest no startup; admin é estático servido por Nginx, que encaminha `/api` ao backend.
 - Configure MONGODB_URI para host acessível na rede Docker externa MONGODB_NETWORK (padrão `mongodb-network`). `127.0.0.1` dentro do contêiner não aponta ao MongoDB do host.
-- Produção exige APP_ORIGIN HTTPS e terminação TLS externa aprovada. A porta web é publicada somente em loopback por padrão. Não exponha o bootstrap diretamente por HTTP em produção.
+- `0.0.0.0` é o endereço de escuta (todas as interfaces IPv4), não uma URL: use o IP ou domínio do servidor no navegador, e esse mesmo valor em APP_ORIGIN. Não é suporte a IPv6.
+- Produção exige APP_ORIGIN HTTPS e terminação TLS externa aprovada. Não exponha o bootstrap diretamente por HTTP em produção; expor em `0.0.0.0` deve ser combinado com firewall/rede restrita ou proxy HTTPS.
+- A porta web publicada vem de `PORT` (com `ADMIN_PORT` como fallback) nos dois Composes e o `NODE_ENV` do serviço de API é `${NODE_ENV:-production}`. O padrão continua sendo produção; prévias sobre HTTP precisam definir `PORT` e `NODE_ENV=development`, pois em produção a API exige `APP_ORIGIN` HTTPS e usa cookies `Secure`, que o navegador rejeita em HTTP. A faixa 7001–7098 é reservada a prévias.
 - Imagens versionadas por APP_VERSION. O Compose usa projetos `shekinah-bootstrap` / `shekinah-bootstrap-dev`, sem assumir controle dos contêineres antigos.
 - Não existem serviços Pusher/S3/mobile ou banco gerenciado neste Compose; só os serviços implementados. Não há backup/snapshot configurado ou promessa de recuperação.
 

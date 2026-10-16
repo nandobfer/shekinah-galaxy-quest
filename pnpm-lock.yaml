@@ -107,6 +107,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.90.0
         version: 5.104.2(react@19.3.1)
+      '@tsparticles/plugin-manual-particles':
+        specifier: 4.4.0
+        version: 4.4.0(@tsparticles/engine@4.4.0)
       '@tsparticles/react':
         specifier: ^4.4.0
         version: 4.4.0(@tsparticles/engine@4.4.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -2043,6 +2046,11 @@ packages:
 
   '@tsparticles/plugin-interactivity@4.4.0':
     resolution: {integrity: sha512-jquoxlT4ra1Mc4glVlIfPubmchyIq5IZ25RdnvAop1uuc+6tu4N1zq5SSeyRO8MhJ94xevsNe6ozjmqvZ9CzKA==}
+    peerDependencies:
+      '@tsparticles/engine': 4.4.0
+
+  '@tsparticles/plugin-manual-particles@4.4.0':
+    resolution: {integrity: sha512-NujmQ/YmU6qrvW1zlGjGjF60hlHZcjA/CIaQZkPgTXrCzmPzp77KOhipm+j3KMUrH7rY1VyrQOOobm9UDxYV3g==}
     peerDependencies:
       '@tsparticles/engine': 4.4.0
 
@@ -6131,6 +6139,10 @@ snapshots:
       '@tsparticles/engine': 4.4.0
 
   '@tsparticles/plugin-interactivity@4.4.0(@tsparticles/engine@4.4.0)':
+    dependencies:
+      '@tsparticles/engine': 4.4.0
+
+  '@tsparticles/plugin-manual-particles@4.4.0(@tsparticles/engine@4.4.0)':
     dependencies:
       '@tsparticles/engine': 4.4.0
 
