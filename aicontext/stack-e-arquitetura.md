@@ -88,7 +88,7 @@ Mesma stack de UI das referências, **sem Next.js** e sem backend paralelo no ad
 - Use Framer Motion para entrada/saída, mudança de abas/etapas, reordenação, feedback e contadores quando adequado; `AnimatePresence` para transições com saída.
 - Hover/foco triviais podem usar Tailwind. Não adicione outra biblioteca de animação para resolver o mesmo problema.
 - Gráficos podem usar a animação interna do recharts; respeite movimento reduzido também nesses casos.
-- O fundo do login usa tsParticles (`@tsparticles/react` + `@tsparticles/slim`), exceção aprovada para canvas, copiando a configuração de partículas/links do Opex. O restante continua com Framer Motion.
+- O fundo do login usa tsParticles (`@tsparticles/react` + `@tsparticles/slim`), exceção aprovada para canvas, adaptando a configuração de partículas do Opex para uma galáxia espiral: estrelas posicionadas manualmente (`@tsparticles/plugin-manual-particles`) em braços ao redor de um núcleo, sem ligações, com rotação lenta da camada. O restante continua com Framer Motion.
 - Animações são curtas, não bloqueiam interação e respeitam `prefers-reduced-motion`. Use `layout`/`layoutId` com parcimônia, sobretudo com portais/listas extensas.
 - Resposta otimista exige rollback e tratamento de falha; saldo, aprovação e recompensa não são confirmados antes da API.
 

@@ -5,8 +5,16 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { LoginPage } from '../login-page';
 import { api, queryClient, sessionKey } from '../session';
 
+const particleState = vi.hoisted(() => ({ fail: false }));
 vi.mock('@shekinah/api-client', () => ({ createApiClient: () => ({ login: vi.fn(), session: vi.fn(), logout: vi.fn() }) }));
-beforeEach(() => { queryClient.clear(); vi.mocked(api.login).mockReset(); });
+// O fundo de partículas é decorativo: aqui ele só existe para provar que não derruba o formulário.
+vi.mock('../login-particle-background', () => ({
+  LoginParticleBackground: () => {
+    if (particleState.fail) throw new Error('efeito indisponível');
+    return null;
+  },
+}));
+beforeEach(() => { queryClient.clear(); vi.mocked(api.login).mockReset(); particleState.fail = false; });
 function setup() { render(<QueryClientProvider client={queryClient}><LoginPage /></QueryClientProvider>); return userEvent.setup(); }
 
 describe('login administrativo', () => {
@@ -45,6 +53,17 @@ describe('login administrativo', () => {
     expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'E-mail ou senha inválidos.');
     expect(screen.getByLabelText('Senha').getAttribute('aria-describedby')).toBe(screen.getByRole('alert').id);
     expect((screen.getByLabelText('E-mail') as HTMLInputElement).value).toBe('admin@example.test');
+  });
+  it('mantém o formulário disponível quando o fundo de partículas falha', async () => {
+    particleState.fail = true;
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      setup();
+      expect(screen.getByRole('heading', { name: 'Shekinah' })).toBeTruthy();
+      expect(screen.getByRole('form', { name: 'Acesso administrativo' })).toBeTruthy();
+    } finally {
+      consoleError.mockRestore();
+    }
   });
   it('bloqueia submissão enquanto aguarda o servidor', async () => {
     let finish!: (value: Awaited<ReturnType<typeof api.login>>) => void;
