@@ -8,6 +8,7 @@ Leia o `AGENTS.md` raiz antes dos guias pertinentes à tarefa.
 |---|---|
 | [Stack e arquitetura](./stack-e-arquitetura.md) | Workspaces, tecnologias, API, admin, mobile, UI e testes |
 | [Autenticação](./modules/auth.md) | Login administrativo, sessão, segurança e script de criação |
+| [Tema e componentes UI](./tema-e-componentes-ui.md) | Tema Opex, tokens, login, componentes reutilizáveis e adaptações para Vite |
 | [Ambiente e bootstrap](./ambiente-local.md) | Instalação, execução, MongoDB, Compose e validação |
 
 ## Estado e manutenção

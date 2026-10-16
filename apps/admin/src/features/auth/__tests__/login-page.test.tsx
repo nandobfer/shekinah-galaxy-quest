@@ -10,6 +10,13 @@ beforeEach(() => { queryClient.clear(); vi.mocked(api.login).mockReset(); });
 function setup() { render(<QueryClientProvider client={queryClient}><LoginPage /></QueryClientProvider>); return userEvent.setup(); }
 
 describe('login administrativo', () => {
+  it('apresenta a identidade Shekinah no layout centralizado do Opex', async () => {
+    setup();
+    expect(screen.getByRole('heading', { name: 'Shekinah' })).toBeTruthy();
+    expect(screen.getByText('Galaxy Quest · Administrativo')).toBeTruthy();
+    expect(screen.getByRole('form', { name: 'Acesso administrativo' })).toBeTruthy();
+    expect(screen.queryByText('nandoburgos.dev')).toBeNull();
+  });
   it('valida campos sem chamar a API e alterna visibilidade', async () => {
     const user = setup();
     await user.click(screen.getByRole('button', { name: /^Entrar/ }));
@@ -36,6 +43,7 @@ describe('login administrativo', () => {
     await user.type(screen.getByLabelText('Senha'), 'wrong');
     await user.click(screen.getByRole('button', { name: /^Entrar/ }));
     expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'E-mail ou senha inválidos.');
+    expect(screen.getByLabelText('Senha').getAttribute('aria-describedby')).toBe(screen.getByRole('alert').id);
     expect((screen.getByLabelText('E-mail') as HTMLInputElement).value).toBe('admin@example.test');
   });
   it('bloqueia submissão enquanto aguarda o servidor', async () => {

@@ -1,7 +1,38 @@
-:root {
+/* Opex theme, copied by request. HSL channels are consumed by the web adapter. */
+:root,
+.dark {
+  --background: 260 22% 6%;
+  --foreground: 260 20% 96%;
+  --card: 260 20% 9%;
+  --card-foreground: 260 20% 96%;
+  --popover: 260 20% 10%;
+  --popover-foreground: 260 20% 96%;
+  --primary: 270 100% 50%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 260 16% 15%;
+  --secondary-foreground: 260 20% 96%;
+  --muted: 260 16% 14%;
+  --muted-foreground: 260 10% 66%;
+  --accent: 270 40% 18%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 260 16% 18%;
+  --input: 260 16% 20%;
+  --ring: 270 100% 64%;
+  --sidebar: 260 24% 5%;
+  --sidebar-foreground: 260 14% 90%;
+  --sidebar-primary: 270 100% 50%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 270 50% 16%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 260 18% 13%;
+  --radius: 0.5rem;
+  --chart-1: #8000ff;
+  --chart-2: #b366ff;
+  --chart-3: #22d3ee;
+  --chart-4: #f472b6;
+  --chart-5: #34d399;
+  --chart-6: #fbbf24;
   color-scheme: dark;
-  --background: #0b1020; --foreground: #eef2ff;
-  --card: #141c31; --muted: #9aaac4; --primary: #b9a0ff;
-  --primary-foreground: #17102f; --border: #34415c;
-  --destructive: #ffa3a3; --ring: #c8b4ff;
 }

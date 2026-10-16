@@ -1,7 +1,8 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { MotionConfig } from 'framer-motion';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
+import { MotionProvider } from '../components/motion/MotionProvider';
+import { Toaster } from '../components/ui/toast';
 import { LogOut, ShieldCheck } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { LoginPage } from '../features/auth/login-page';
@@ -19,12 +20,12 @@ function SessionRoutes() {
     <Route path="/" element={session.data ? <main className="page-shell"><section className="w-full max-w-lg space-y-5 rounded-3xl border border-border bg-card p-8">
       <ShieldCheck className="text-primary" size={32} aria-hidden="true" />
       <h1 className="text-2xl font-semibold">Olá, {session.data.user.name}.</h1>
-      <p className="text-muted">Sua sessão administrativa está ativa.</p>
+      <p className="text-muted-foreground">Sua sessão administrativa está ativa.</p>
       <Button variant="outline" onClick={() => logout.mutate()} disabled={logout.isPending}><LogOut size={18} aria-hidden="true" />{logout.isPending ? 'Saindo…' : 'Sair'}</Button>
     </section></main> : <Navigate to="/login" replace />} />
     <Route path="*" element={<Navigate to={session.data ? '/' : '/login'} replace />} />
   </Routes>;
 }
 export function App() {
-  return <MotionConfig reducedMotion="user"><BrowserRouter><SessionRoutes /></BrowserRouter><Toaster theme="dark" richColors /></MotionConfig>;
+  return <MotionProvider><BrowserRouter><SessionRoutes /></BrowserRouter><Toaster theme="dark" richColors position="top-right" /></MotionProvider>;
 }

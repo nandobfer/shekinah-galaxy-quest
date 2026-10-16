@@ -76,8 +76,8 @@ Mesma stack de UI das referências, **sem Next.js** e sem backend paralelo no ad
 - `src/app`: composição, providers e roteamento; `src/features`: telas, hooks e fluxos por módulo; `src/components/ui`: componentes genéricos; `src/lib`: utilitários/integrações de cliente.
 - Roteamento web implementado com React Router; TanStack Query cuida apenas do estado remoto.
 - Não use App Router, Server Components, Server Actions, `next/*`, `next-themes` ou handlers de API do Next.js. Chamadas de negócio vão para NestJS.
-- Cores, espaçamentos e identidade vêm de tokens; não herde automaticamente a primária roxa ou o tema escuro fixo do Opex. Implementação web dos tokens pode usar variáveis CSS.
-- Reutilize shadcn/Radix antes de criar componentes equivalentes. Padrões Glass podem ser adaptados das referências quando combinarem com a identidade aprovada, não impostos como requisito.
+- O administrativo adota explicitamente o tema escuro fixo do Opex, primária `#8000FF`, Inter local, tokens e componentes copiados. Tokens HSL ficam em `packages/design-tokens/theme.css` e a adaptação web em `apps/admin/src/styles.css`. Consulte `tema-e-componentes-ui.md`.
+- Reutilize os componentes shadcn/Radix copiados antes de criar equivalentes; preserve variantes, medidas e aparência do Opex. Não transfira DOM, CSS web ou dependências nativas por analogia ao mobile.
 - Componentes têm responsabilidade única; extraia hooks/serviços e decomponha componentes grandes. Listagens tratam filtros, paginação, estados vazios e ações críticas com confirmação.
 - Use virtualização em listas extensas quando necessária ao desempenho; filtros compartilháveis ficam na URL. Preferências locais persistentes devem usar chave versionada e validação Zod, nunca armazenar segredos.
 - Formulários reutilizam schemas de entrada dos contratos quando aplicável, exibem erros pt-BR e bloqueiam submissão duplicada; campos usam toda a largura da célula e campo isolado pode ocupar a linha inteira.
@@ -88,6 +88,7 @@ Mesma stack de UI das referências, **sem Next.js** e sem backend paralelo no ad
 - Use Framer Motion para entrada/saída, mudança de abas/etapas, reordenação, feedback e contadores quando adequado; `AnimatePresence` para transições com saída.
 - Hover/foco triviais podem usar Tailwind. Não adicione outra biblioteca de animação para resolver o mesmo problema.
 - Gráficos podem usar a animação interna do recharts; respeite movimento reduzido também nesses casos.
+- O fundo do login usa tsParticles (`@tsparticles/react` + `@tsparticles/slim`), exceção aprovada para canvas, copiando a configuração de partículas/links do Opex. O restante continua com Framer Motion.
 - Animações são curtas, não bloqueiam interação e respeitam `prefers-reduced-motion`. Use `layout`/`layoutId` com parcimônia, sobretudo com portais/listas extensas.
 - Resposta otimista exige rollback e tratamento de falha; saldo, aprovação e recompensa não são confirmados antes da API.
 
@@ -105,6 +106,6 @@ Mesma stack de UI das referências, **sem Next.js** e sem backend paralelo no ad
 ## 5. O que não herdar automaticamente
 
 - PostgreSQL/TypeORM, Clerk, PM2, autenticação de dono único, multiempresa, regras de negócio e infraestrutura das referências não fazem parte desta adaptação. MongoDB/Mongoose foram aprovados explicitamente para este projeto.
-- Tiptap, CodeMirror/Vim, xterm, tsParticles, bibliotecas de dados 3D/Owlbear, IA e SDKs específicos de integrações pertencem a funcionalidades das referências, não à base obrigatória deste app. Só adotar mediante necessidade e escopo aprovados.
+- Tiptap, CodeMirror/Vim, xterm, bibliotecas de dados 3D/Owlbear, IA e SDKs específicos de integrações pertencem a funcionalidades das referências, não à base obrigatória deste app. Só adotar mediante necessidade e escopo aprovados. tsParticles foi aprovado para o login web.
 - Não copie regras de `src/core` imutável quando esse core não existe aqui. Preserve contratos públicos e prefira composição sem criar proibições artificiais de manutenção.
 - Não copie portas, redes, credenciais ou arquivos reais de ambiente. Configure cada ambiente explicitamente; variáveis públicas do Vite/mobile nunca contêm segredos.

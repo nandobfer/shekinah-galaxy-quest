@@ -12,7 +12,7 @@ function setup() { render(<QueryClientProvider client={queryClient}><App /></Que
 describe('rotas administrativas', () => {
   it('redireciona visitante ao login', async () => {
     vi.mocked(api.session).mockResolvedValue(null); setup();
-    expect(await screen.findByRole('heading', { name: 'Boas-vindas' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Shekinah' })).toBeTruthy();
     expect(window.location.pathname).toBe('/login');
   });
   it('restaura sessão e sai com limpeza do cache protegido', async () => {
@@ -23,7 +23,7 @@ describe('rotas administrativas', () => {
     expect(await screen.findByRole('heading', { name: 'Olá, Operador.' })).toBeTruthy();
     vi.mocked(api.session).mockResolvedValue(null);
     await user.click(screen.getByRole('button', { name: 'Sair' }));
-    expect(await screen.findByRole('heading', { name: 'Boas-vindas' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Shekinah' })).toBeTruthy();
     expect(queryClient.getQueryData(['protected', 'example'])).toBeUndefined();
   });
   it('oferece nova tentativa quando API está indisponível', async () => {
@@ -31,6 +31,6 @@ describe('rotas administrativas', () => {
     const user = setup();
     expect(await screen.findByRole('heading', { name: 'Não foi possível conectar' })).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Tentar novamente' }));
-    await waitFor(() => expect(screen.getByRole('heading', { name: 'Boas-vindas' })).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Shekinah' })).toBeTruthy());
   });
 });
