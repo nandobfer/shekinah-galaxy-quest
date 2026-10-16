@@ -72,7 +72,9 @@ describe('Auth.js real integrado ao NestJS', () => {
   it('protege /me e publica o contrato OpenAPI', async () => {
     const response = await request(app.getHttpServer()).get('/api/v1/me').expect(401);
     expect(response.body.error.code).toBe('UNAUTHENTICATED');
-    const spec = await request(app.getHttpServer()).get('/api/v1/openapi.json').expect(200);
+    await request(app.getHttpServer()).get('/api/v1/openapi.json').expect(401);
+    const client = agent(); await login(client);
+    const spec = await client.get('/api/v1/openapi.json').expect(200);
     expect(spec.body.paths['/me'].get.responses['200']).toBeDefined();
   });
   it('autentica, emite cookie HttpOnly e retorna o contrato sem hash', async () => {

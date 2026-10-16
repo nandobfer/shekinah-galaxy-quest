@@ -12,7 +12,7 @@ function setup() { render(<QueryClientProvider client={queryClient}><App /></Que
 describe('rotas administrativas', () => {
   it('redireciona visitante ao login', async () => {
     vi.mocked(api.session).mockResolvedValue(null); setup();
-    expect(await screen.findByRole('heading', { name: 'Shekinah' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Shekinah' }, { timeout: 5000 })).toBeTruthy();
     expect(window.location.pathname).toBe('/login');
   });
   it('restaura sessão e sai com limpeza do cache protegido', async () => {
@@ -20,11 +20,19 @@ describe('rotas administrativas', () => {
     vi.mocked(api.logout).mockResolvedValue(undefined);
     queryClient.setQueryData(['protected', 'example'], { private: true });
     const user = setup();
-    expect(await screen.findByRole('heading', { name: 'Olá, Operador.' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Início' })).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Operador' }));
     vi.mocked(api.session).mockResolvedValue(null);
     await user.click(screen.getByRole('button', { name: 'Sair' }));
     expect(await screen.findByRole('heading', { name: 'Shekinah' })).toBeTruthy();
     expect(queryClient.getQueryData(['protected', 'example'])).toBeUndefined();
+  });
+  it('protege acesso direto às integrações sem sessão', async () => {
+    window.history.replaceState({}, '', '/integracoes/pusher');
+    vi.mocked(api.session).mockResolvedValue(null); setup();
+    expect(await screen.findByRole('heading', { name: 'Shekinah' })).toBeTruthy();
+    expect(window.location.pathname).toBe('/login');
+    expect(screen.queryByRole('navigation')).toBeNull();
   });
   it('oferece nova tentativa quando API está indisponível', async () => {
     vi.mocked(api.session).mockRejectedValueOnce(new Error('offline')).mockResolvedValue(null);

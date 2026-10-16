@@ -4,7 +4,7 @@
 
 - API NestJS com Auth.js Core, Credentials e sessão JWE em cookie; sem Next.js e sem bearer JWT convencional.
 - Usuários persistidos com Mongoose: nome, e-mail normalizado com índice único, hash Argon2id, papel `admin`, status ativo, versão de sessão e timestamps.
-- Login `/login` no React/Vite; rota `/` protegida contém somente saudação e logout, não dashboard.
+- Login `/login` no React/Vite; rotas protegidas usam layout com Início e Integrações, nome e logout no rodapé da sidebar. Consulte `layout.md` e `integrations.md`.
 - A tela de login reproduz a composição do Opex (card central translúcido, fundo radial, tema roxo e fonte Inter), com identidade Shekinah e e-mail/senha. O fundo de partículas virou uma galáxia espiral (braços ao redor de um núcleo, sem ligações, rotação lenta), conforme a tarefa SGQ-1. `login-page.tsx` separa layout/carregamento lazy do canvas de `login-form.tsx`, que mantém contratos, mutation e sessão atuais. Não há username ou autenticação por credenciais de ambiente do Opex.
 - Não há cadastro público, senha padrão, administrador automático, recuperação de senha ou autenticação mobile nesta entrega.
 
@@ -14,7 +14,7 @@
 - `GET /api/v1/me` exige sessão administrativa; retorna `{ user: { id, name, email, role }, expires }`. `GET /api/v1/openapi.json` documenta endpoints REST próprios; endpoints Auth.js seguem a documentação oficial.
 - O bridge reconstrói a URL pela `APP_ORIGIN` configurada, não pelo Host recebido. Requisições POST exigem Origin exata; cookies usam HttpOnly/SameSite do Auth.js, Secure em produção.
 - O callback JWT consulta o usuário atual no MongoDB. Usuário inativo, papel inválido ou versão diferente invalida a sessão, inclusive em `/me`.
-- O guard é global no AppModule: novas rotas REST são protegidas por padrão; somente health/OpenAPI têm exceção pública explícita. O bridge Auth.js atende seu próprio protocolo antes do roteamento Nest.
+- O guard é global no AppModule: novas rotas REST são protegidas por padrão; somente health tem exceção pública explícita. OpenAPI exige sessão administrativa. O bridge Auth.js atende seu próprio protocolo antes do roteamento Nest.
 - `/me` propaga a renovação/limpeza dos cookies do Auth.js e usa Cache-Control no-store. A sessão expira por inatividade conforme SESSION_MAX_AGE_SECONDS, sem guardar tokens no JavaScript do cliente.
 - Logout incrementa a versão de sessão: **encerra todas as sessões daquele administrador**, além de limpar o cookie atual. Essa decisão favorece revogação efetiva neste bootstrap.
 - Mutações de autenticação (exceto logout) têm limite por IP, em memória e por processo; variantes do caminho não escapam da contagem. Não há confiança automática em X-Forwarded-For. Com múltiplas réplicas ou proxy com IPs compartilhados, revisar explicitamente o armazenamento do limite e a política de proxies.

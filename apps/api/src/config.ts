@@ -3,6 +3,7 @@ import { z } from 'zod';
 const schema = z.object({
   MONGODB_URI: z.string().regex(/^mongodb(?:\+srv)?:\/\//),
   AUTH_SECRET: z.string().min(32),
+  INTEGRATIONS_ENCRYPTION_KEY: z.string().optional().refine(value => !value || (Buffer.from(value, 'base64').length === 32 && Buffer.from(value, 'base64').toString('base64') === value), 'Use base64 de 32 bytes.'),
   APP_ORIGIN: z.url().refine(value => new URL(value).origin === value, 'APP_ORIGIN deve conter apenas a origem, sem caminho ou barra final.'),
   API_PORT: z.coerce.number().int().min(1).max(65535).default(3010),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
