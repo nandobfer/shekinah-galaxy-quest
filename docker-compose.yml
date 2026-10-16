@@ -10,7 +10,7 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       API_PORT: 3010
     expose: ["3010"]
-    networks: [default, mongodb-network, minio-network, soketi0network]
+    networks: [default, mongodb-network, minio-network, soketi-network]
     restart: unless-stopped
   admin:
     image: shekinah/admin:${APP_VERSION:-0.1.0}
