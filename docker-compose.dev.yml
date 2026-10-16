@@ -22,7 +22,7 @@ services:
     env_file: .env
     environment:
       API_PROXY_TARGET: http://api:3010
-    ports: ["127.0.0.1:${ADMIN_PORT:-5180}:${ADMIN_PORT:-5180}"]
+    ports: ["0.0.0.0:${ADMIN_PORT:-5180}:${ADMIN_PORT:-5180}"]
     volumes:
       - ./apps/admin/src:/app/apps/admin/src
       - ./packages:/app/packages

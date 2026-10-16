@@ -14,10 +14,12 @@
 - Admin: `pnpm dev:admin` (padrão 5180, strictPort). Acesse a origem exata configurada em APP_ORIGIN.
 - O proxy Vite encaminha `/api` para API_PROXY_TARGET. Nenhuma variável pública contém segredos.
 - Criar administrador: `pnpm exec tsx scripts/create-admin.ts`, na raiz, com terminal interativo. O script grava somente quando executado pelo operador.
+- Scripts locais devem reutilizar `resolveScriptMongoUri` de `scripts/helpers/mongodb-uri.ts`: converte o hostname único `mongodb` em `127.0.0.1`, sem mudar o `.env`, credenciais, porta, banco ou parâmetros. É possível informar outro nome de contêiner explicitamente ao helper. URIs externas, localhost/IP, SRV e listas de hosts de replica sets ficam intactas. A porta publicada no host precisa coincidir com a porta da URI; o helper não descobre mapeamentos Docker e não deve ser usado pela API nos contêineres.
 
 ## Docker Compose
 
 - Desenvolvimento containerizado: `docker compose -f docker-compose.dev.yml up --build` **somente com autorização para build/iniciar serviços**.
+- O Compose de desenvolvimento publica ADMIN_PORT em `0.0.0.0` para acesso remoto. Configure APP_ORIGIN com a URL exata do navegador; o operador deve restringir o acesso por rede/IP ou usar proxy HTTPS. Vite não é servidor de produção e login por HTTP não protege credenciais em trânsito. Mudanças de porta/origem exigem recriar os serviços; não requerem build quando somente a configuração de ambiente/Compose muda.
 - Produção: `docker compose up -d --build`, também sujeito à autorização. API usa runtime tsx, sem compilação Nest no startup; admin é estático servido por Nginx, que encaminha `/api` ao backend.
 - Configure MONGODB_URI para host acessível na rede Docker externa MONGODB_NETWORK (padrão `mongodb-network`). `127.0.0.1` dentro do contêiner não aponta ao MongoDB do host.
 - Produção exige APP_ORIGIN HTTPS e terminação TLS externa aprovada. A porta web é publicada somente em loopback por padrão. Não exponha o bootstrap diretamente por HTTP em produção.
@@ -27,7 +29,7 @@
 ## Validação sem build
 
 - `pnpm typecheck` e `pnpm lint`.
-- Testes focados: `pnpm exec vitest run apps/api/src/__tests__/auth.integration.test.ts` (API), `pnpm exec vitest run apps/admin/src/features/auth/__tests__/login-page.test.tsx` (login) e demais caminhos explícitos pertinentes. A configuração raiz reúne projetos `api`, `admin`, `contracts` e `api-client`. Nunca `pnpm test` sem filtro durante desenvolvimento autônomo.
+- Testes focados: `pnpm exec vitest run apps/api/src/__tests__/auth.integration.test.ts` (API), `pnpm exec vitest run apps/admin/src/features/auth/__tests__/login-page.test.tsx` (login), `pnpm exec vitest run scripts/helpers/__tests__/mongodb-uri.test.ts` (scripts) e demais caminhos explícitos pertinentes. A configuração raiz reúne projetos `api`, `admin`, `contracts`, `api-client` e `scripts`. Nunca `pnpm test` sem filtro durante desenvolvimento autônomo.
 - A integração de auth usa `mongodb-memory-server-core` (processo MongoDB temporário, não mock), banco efêmero e limpeza ao final; pode baixar o binário do MongoDB na primeira execução. Não lê MONGODB_URI real e não precisa escrever no MongoDB compartilhado.
 - Builds e suíte completa não são verificação automática. Os testes não cadastram administradores reais.
 - A cobertura inicial também verifica expiração JWE, cliente HTTP sem retry, rotas web, recuperação de indisponibilidade e recusa de execução não interativa do CLI. MongoDB 8.0.18 é usado no harness efêmero para reprodutibilidade.

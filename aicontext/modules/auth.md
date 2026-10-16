@@ -28,6 +28,8 @@ Execute na raiz: `pnpm exec tsx scripts/create-admin.ts`.
 
 O script lê `.env`, exige terminal interativo e solicita nome/e-mail/senha/confirmação, com senha mascarada. A senha precisa ter de 12 a 128 caracteres. Não aceite senha em argumento ou pipe. Não há senha temporária conhecida: o operador escolhe uma senha forte e o cadastro já é ativo, conforme o fluxo CLI aprovado para esta entrega.
 
+Antes da conexão, reutiliza `resolveScriptMongoUri` (`scripts/helpers/mongodb-uri.ts`) para substituir o hostname único `mongodb` por `127.0.0.1` na URI local. Não é necessário sobrescrever MONGODB_URI no comando quando o `.env` contém o nome desse contêiner; a porta precisa estar publicada no host com o mesmo número. O `.env` e a URI utilizada pela API não são alterados. URIs externas, SRV e replica sets permanecem intactas.
+
 Usa o mesmo serviço/hash da API, aguarda o índice único antes da inserção e fecha a conexão em sucesso/falha. E-mail duplicado não altera conta, papel ou senha. Não execute este script automaticamente no startup nem crie contas durante testes no banco real.
 
 ## Testes e limites
