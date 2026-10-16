@@ -17,7 +17,7 @@ services:
     build:
       context: .
       target: admin
-    ports: ["127.0.0.1:${PORT:-${ADMIN_PORT:-5180}}:80"]
+    ports: ["0.0.0.0:${PORT:-${ADMIN_PORT:-5180}}:80"]
     depends_on: [api]
     restart: unless-stopped
 networks:
