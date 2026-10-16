@@ -35,7 +35,8 @@ export interface GalaxyOptions {
   seed?: number;
 }
 
-const DEFAULT_COUNT = 320;
+/** Quantidade padrão de estrelas da cena. */
+const DEFAULT_COUNT = 480;
 const DEFAULT_ARMS = 2;
 const DEFAULT_TURNS = 1.6;
 const DEFAULT_SEED = 1;

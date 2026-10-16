@@ -106,12 +106,12 @@ describe('fundo de galáxia do login', () => {
     expect(options.interactivity?.events?.onHover?.enable).toBe(false);
     expect(options.interactivity?.events?.onClick?.enable).toBe(false);
 
+    // O disco passa de metade do menor lado do viewport, então o limite é o desvio em relação ao
+    // centro (raio de 54%), e não o intervalo 0–100: a periferia mais apagada é recortada na borda.
     for (const particle of options.manualParticles ?? []) {
       expect(particle.position.mode).toBe('percent');
-      expect(particle.position.x).toBeGreaterThanOrEqual(0);
-      expect(particle.position.x).toBeLessThanOrEqual(100);
-      expect(particle.position.y).toBeGreaterThanOrEqual(0);
-      expect(particle.position.y).toBeLessThanOrEqual(100);
+      expect(Math.abs(particle.position.x - 50)).toBeLessThanOrEqual(54.5);
+      expect(Math.abs(particle.position.y - 50)).toBeLessThanOrEqual(54.5);
       expect(particle.options.size.value).toBeGreaterThan(0);
       expect(THEME_COLORS).toContain(particle.options.color.value);
     }
@@ -120,6 +120,20 @@ describe('fundo de galáxia do login', () => {
     await state.register?.(engine);
     expect(loadSlim).toHaveBeenCalledWith(engine);
     expect(loadManualParticlesPlugin).toHaveBeenCalledWith(engine);
+  });
+
+  it('desenha a galáxia maior, com o raio derivado do menor lado', () => {
+    render(<LoginParticleBackground />);
+    const particles = state.options.manualParticles ?? [];
+    const deviation = (axis: 'x' | 'y') => Math.max(...particles.map(particle => Math.abs(particle.position[axis] - 50)));
+
+    // 1024x768: raio de 54% do menor lado (768). O eixo vertical concentra o maior desvio
+    // percentual e passa do teto anterior de 47%, aproximando a galáxia da borda.
+    expect(deviation('y')).toBeGreaterThan(45);
+    expect(deviation('y')).toBeLessThanOrEqual(54.5);
+    // O mesmo raio ocupa menos da largura: 54 * 768 / 1024 = 40,5%.
+    expect(deviation('x')).toBeGreaterThan(39);
+    expect(deviation('x')).toBeLessThanOrEqual(40.6);
   });
 
   it('gira a galáxia e cintila as estrelas por padrão', () => {

@@ -29,7 +29,7 @@ describe('gerador da galáxia', () => {
   });
 
   it('respeita a quantidade pedida e o padrão', () => {
-    expect(generateGalaxy()).toHaveLength(320);
+    expect(generateGalaxy()).toHaveLength(480);
     expect(generateGalaxy({ count: 40 })).toHaveLength(40);
     expect(generateGalaxy({ count: 10, arms: 3 })).toHaveLength(10);
   });

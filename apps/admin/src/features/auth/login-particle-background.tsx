@@ -27,8 +27,10 @@ interface ManualParticle {
 
 type GalaxyParticlesOptions = ParticlesOptions & { manualParticles: ManualParticle[] };
 
-/** Raio do disco galáctico como fração do menor lado do viewport (< 0.5 para a rotação não cortar). */
-const GALAXY_RADIUS_RATIO = 0.47;
+/** Raio do disco galáctico como fração do menor lado do viewport. Acima de 0,5 a periferia
+ * (a faixa mais apagada) é recortada pelas bordas da tela; é um recorte pequeno e intencional,
+ * que faz a galáxia preencher o quadro sem competir com o formulário. */
+const GALAXY_RADIUS_RATIO = 0.54;
 /** Duração (s) de uma volta completa da galáxia: lenta o bastante para não competir com o formulário. */
 const GALAXY_ROTATION_SECONDS = 150;
 
