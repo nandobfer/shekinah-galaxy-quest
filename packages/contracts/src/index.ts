@@ -1,4 +1,5 @@
 import { z } from 'zod';
+export * from './integrations.js';
 
 export const emailSchema = z.string().trim().toLowerCase().pipe(z.email('Informe um e-mail válido.').max(254));
 export const passwordSchema = z.string().min(12, 'Use ao menos 12 caracteres.').max(128, 'Use no máximo 128 caracteres.');

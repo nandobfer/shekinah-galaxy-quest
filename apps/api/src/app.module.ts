@@ -7,11 +7,12 @@ import { CONFIG, type AppConfig } from './config.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { Public, SessionGuard } from './modules/auth/session.guard.js';
 import { openapi } from './openapi.js';
+import { IntegrationsModule } from './modules/integrations/integrations.module.js';
 
 @Controller()
 class AppController {
   @Get('health') @Public() health() { return { status: 'ok' }; }
-  @Get('openapi.json') @Public() openapi() { return openapi; }
+  @Get('openapi.json') openapi() { return openapi; }
   @Get('me')
   me(@Req() req: Request & { adminSession: AdminSession }) { return req.adminSession; }
 }
@@ -24,7 +25,7 @@ export class AppModule {
     class ConfigModule {}
     return {
       module: AppModule,
-      imports: [ConfigModule, MongooseModule.forRoot(config.MONGODB_URI, { serverSelectionTimeoutMS: 5000, retryAttempts: 0 }), AuthModule],
+      imports: [ConfigModule, MongooseModule.forRoot(config.MONGODB_URI, { serverSelectionTimeoutMS: 5000, retryAttempts: 0 }), AuthModule, IntegrationsModule],
       controllers: [AppController],
       providers: [{ provide: APP_GUARD, useExisting: SessionGuard }],
     };
