@@ -1,0 +1,7 @@
+:root {
+  color-scheme: dark;
+  --background: #0b1020; --foreground: #eef2ff;
+  --card: #141c31; --muted: #9aaac4; --primary: #b9a0ff;
+  --primary-foreground: #17102f; --border: #34415c;
+  --destructive: #ffa3a3; --ring: #c8b4ff;
+}

@@ -1,0 +1,26 @@
+name: shekinah-bootstrap
+services:
+  api:
+    image: shekinah/api:${APP_VERSION:-0.1.0}
+    build:
+      context: .
+      target: api
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      API_PORT: 3010
+    expose: ["3010"]
+    networks: [default, mongodb]
+    restart: unless-stopped
+  admin:
+    image: shekinah/admin:${APP_VERSION:-0.1.0}
+    build:
+      context: .
+      target: admin
+    ports: ["127.0.0.1:${ADMIN_PORT:-5180}:80"]
+    depends_on: [api]
+    restart: unless-stopped
+networks:
+  mongodb:
+    external: true
+    name: ${MONGODB_NETWORK:-mongodb-network}

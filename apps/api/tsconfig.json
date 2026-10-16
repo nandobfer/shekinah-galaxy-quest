@@ -1,0 +1,5 @@
+{
+  "extends": "@shekinah/config/tsconfig.json",
+  "compilerOptions": { "experimentalDecorators": true },
+  "include": ["src", "vitest.config.mts"]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "@shekinah/api", "version": "0.0.0", "private": true, "type": "module",
+  "scripts": { "dev": "tsx watch src/main.ts", "start": "tsx src/main.ts", "typecheck": "tsc --noEmit" },
+  "dependencies": {
+    "@auth/core": "^0.41.0", "@nestjs/common": "^11.1.0", "@nestjs/core": "^11.1.0",
+    "@nestjs/platform-express": "^11.1.0", "@nestjs/mongoose": "^11.0.0",
+    "@node-rs/argon2": "^2.0.0", "@shekinah/contracts": "workspace:*",
+    "dotenv": "^17.2.0", "express": "^5.1.0", "express-rate-limit": "^8.2.0",
+    "helmet": "^8.1.0", "mongoose": "^9.0.0", "pino": "^10.0.0",
+    "reflect-metadata": "^0.2.2", "rxjs": "^7.8.2", "zod": "^4.3.0"
+  },
+  "devDependencies": {
+    "@shekinah/config": "workspace:*", "@types/express": "^5.0.0", "@types/supertest": "^6.0.0",
+    "supertest": "^7.1.0", "mongodb-memory-server-core": "^11.0.0"
+  }
+}

@@ -1,0 +1,1 @@
+{ "extends": "@shekinah/config/tsconfig.json", "include": ["src"] }

@@ -1,0 +1,7 @@
+{
+  "name": "@shekinah/api-client", "version": "0.0.0", "private": true, "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "typecheck": "tsc --noEmit" },
+  "dependencies": { "@shekinah/contracts": "workspace:*", "axios": "^1.13.0", "zod": "^4.3.0" },
+  "devDependencies": { "@shekinah/config": "workspace:*" }
+}

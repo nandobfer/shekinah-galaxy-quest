@@ -1,0 +1,5 @@
+{
+  "extends": "./packages/config/tsconfig.json",
+  "include": ["scripts/**/*.ts", "apps/api/src/**/*.ts"],
+  "compilerOptions": { "experimentalDecorators": true }
+}
