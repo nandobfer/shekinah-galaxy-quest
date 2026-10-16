@@ -7,7 +7,7 @@ services:
       target: api
     env_file: .env
     environment:
-      NODE_ENV: production
+      NODE_ENV: ${NODE_ENV:-production}
       API_PORT: 3010
     expose: ["3010"]
     networks: [default, mongodb]
@@ -17,7 +17,7 @@ services:
     build:
       context: .
       target: admin
-    ports: ["127.0.0.1:${ADMIN_PORT:-5180}:80"]
+    ports: ["127.0.0.1:${PORT:-${ADMIN_PORT:-5180}}:80"]
     depends_on: [api]
     restart: unless-stopped
 networks:

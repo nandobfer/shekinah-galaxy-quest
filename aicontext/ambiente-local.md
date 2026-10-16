@@ -23,6 +23,7 @@
 - Produção: `docker compose up -d --build`, também sujeito à autorização. API usa runtime tsx, sem compilação Nest no startup; admin é estático servido por Nginx, que encaminha `/api` ao backend.
 - Configure MONGODB_URI para host acessível na rede Docker externa MONGODB_NETWORK (padrão `mongodb-network`). `127.0.0.1` dentro do contêiner não aponta ao MongoDB do host.
 - Produção exige APP_ORIGIN HTTPS e terminação TLS externa aprovada. A porta web é publicada somente em loopback por padrão. Não exponha o bootstrap diretamente por HTTP em produção.
+- A porta web publicada vem de `PORT` (com `ADMIN_PORT` como fallback) e o `NODE_ENV` do serviço de API é `${NODE_ENV:-production}`. O padrão continua sendo produção; prévias locais sobre HTTP precisam definir `PORT` e `NODE_ENV=development`, pois em produção a API exige `APP_ORIGIN` HTTPS e usa cookies `Secure`, que o navegador rejeita em `http://localhost`.
 - Imagens versionadas por APP_VERSION. O Compose usa projetos `shekinah-bootstrap` / `shekinah-bootstrap-dev`, sem assumir controle dos contêineres antigos.
 - Não existem serviços Pusher/S3/mobile ou banco gerenciado neste Compose; só os serviços implementados. Não há backup/snapshot configurado ou promessa de recuperação.
 
