@@ -3,6 +3,7 @@ import { Schema, type HydratedDocument } from 'mongoose';
 export interface User {
   name: string; email: string; passwordHash: string; role: 'admin'; active: boolean;
   sessionVersion: number; createdAt: Date; updatedAt: Date;
+  roles: string[]; accessVersion: number;
 }
 export type UserDocument = HydratedDocument<User>;
 export const UserSchema = new Schema<User>({
@@ -12,5 +13,7 @@ export const UserSchema = new Schema<User>({
   role: { type: String, enum: ['admin'], required: true },
   active: { type: Boolean, default: true, required: true },
   sessionVersion: { type: Number, default: 0, required: true },
+  roles: { type: [String], default: [], index: true },
+  accessVersion: { type: Number, default: 0 },
 }, { timestamps: true, collection: 'users' });
 UserSchema.index({ email: 1 }, { unique: true });

@@ -7,10 +7,10 @@ let server: Server;
 let baseURL: string;
 let status = 200;
 let body: unknown;
-const calls: { path?: string; method?: string; header?: string | string[] }[] = [];
+const calls: { path?: string; method?: string; header?: string | string[]; viewAs?: string | string[] }[] = [];
 beforeAll(async () => {
   server = createServer((req, res) => {
-    calls.push({ path: req.url, method: req.method, header: req.headers['x-shekinah-request'] });
+    calls.push({ path: req.url, method: req.method, header: req.headers['x-shekinah-request'], ...(req.headers['x-perfix-view-as'] ? { viewAs: req.headers['x-perfix-view-as'] } : {}) });
     res.writeHead(status, { 'content-type': 'application/json' }); res.end(JSON.stringify(body));
   });
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -34,5 +34,24 @@ describe('cliente centralizado de integrações', () => {
     status = 409; body = { message: 'Configuração alterada. Recarregue.' };
     await expect(api.integrations.test('smtp')).rejects.toThrow('Configuração alterada.');
     expect(calls.filter(call => call.method === 'POST')).toHaveLength(1);
+  });
+  it('envia contexto dinâmico de simulação, mas consulta opções explicitamente com o acesso real', async () => {
+    let header = 'payload-simulado';
+    const api = createApiClient({ baseURL, headers: () => ({ 'x-perfix-view-as': header }) });
+    body = { roles: [], total: 0, hierarchyVersion: 0 };
+    await api.permissions.roles();
+    body = [];
+    await api.permissions.viewRoles();
+    header = 'none';
+    await api.integrations.list();
+    expect(calls.map(call => call.viewAs)).toEqual(['payload-simulado', 'none', 'none']);
+  });
+  it('notifica rejeição da simulação e mantém erro recuperável sem retry', async () => {
+    const forbidden = vi.fn();
+    const api = createApiClient({ baseURL, onForbidden: forbidden });
+    status = 403; body = { error: { code: 'VIEW_AS_INVALID', message: 'Alvo indisponível' }, message: 'Alvo indisponível' };
+    await expect(api.permissions.roles()).rejects.toThrow('Alvo indisponível');
+    expect(forbidden).toHaveBeenCalledWith('VIEW_AS_INVALID');
+    expect(calls).toHaveLength(1);
   });
 });

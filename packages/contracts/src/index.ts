@@ -1,5 +1,7 @@
 import { z } from 'zod';
 export * from './integrations.js';
+export * from './permissions.js';
+import { accessSchema } from './permissions.js';
 
 export const emailSchema = z.string().trim().toLowerCase().pipe(z.email('Informe um e-mail válido.').max(254));
 export const passwordSchema = z.string().min(12, 'Use ao menos 12 caracteres.').max(128, 'Use no máximo 128 caracteres.');
@@ -14,7 +16,7 @@ export const createAdminSchema = loginSchema.extend({
 export const adminUserSchema = z.object({
   id: z.string(), name: z.string(), email: z.email(), role: z.literal('admin'),
 });
-export const sessionSchema = z.object({ user: adminUserSchema, expires: z.iso.datetime() });
+export const sessionSchema = z.object({ user: adminUserSchema, expires: z.iso.datetime(), access: accessSchema.optional() });
 export const errorSchema = z.object({ error: z.object({ code: z.string(), message: z.string() }) });
 export type LoginInput = z.infer<typeof loginSchema>;
 export type CreateAdminInput = z.infer<typeof createAdminSchema>;

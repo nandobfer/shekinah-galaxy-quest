@@ -4,10 +4,12 @@ import { Link } from 'react-router-dom';
 import { integrationDefinition, integrationPath, type Integration } from '@shekinah/contracts';
 import { Button } from '@/components/ui/button';
 import { formatDate, IntegrationStatusDot } from './integration-feedback';
+import { usePermissions } from '../users/hooks/usePermissions';
 
 export function DetailHeader({ data }: { data: Integration }) {
   const def = integrationDefinition(data.id);
-  const back = def.parent
+  const { can } = usePermissions();
+  const back = def.parent && can(`integrations.${def.parent}.view`)
     ? { href: integrationPath(def.parent), label: `Voltar para ${integrationDefinition(def.parent).name}` }
     : { href: '/integracoes', label: 'Voltar para Integrações' };
   return <>

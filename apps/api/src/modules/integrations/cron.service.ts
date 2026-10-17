@@ -2,7 +2,7 @@ import { ConflictException, Inject, Injectable, OnModuleInit, OnApplicationBoots
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomUUID } from 'node:crypto';
-import { HEALTH_CHECK_JOB_ID, HEALTH_CHECK_JOB_LABEL, type CronState } from '@shekinah/contracts';
+import { HEALTH_CHECK_JOB_ID, HEALTH_CHECK_JOB_LABEL, type Access, type CronState } from '@shekinah/contracts';
 import type { CronRecord } from './integration.schema.js';
 import { IntegrationsService } from './integrations.service.js';
 import { createLogger } from '../../logger.js';
@@ -55,8 +55,8 @@ export class CronService implements OnModuleInit, OnApplicationBootstrap, Before
       nextRunAt: record?.nextRunAt?.toISOString() ?? null, lastRunAt: record?.lastRunAt?.toISOString() ?? null,
       lastFinishedAt: record?.lastFinishedAt?.toISOString() ?? null, lastStatus: record?.lastStatus ?? null, message: record?.message ?? null };
   }
-  run(manual: boolean, actor: string, now = new Date()) { return this.track(this.execute(manual, actor, now)); }
-  private async execute(manual: boolean, actor: string, now: Date) {
+  run(manual: boolean, actor: string, now = new Date(), simulation?: Access['simulation']) { return this.track(this.execute(manual, actor, now, simulation)); }
+  private async execute(manual: boolean, actor: string, now: Date, simulation?: Access['simulation']) {
     if (this.closing) throw new ConflictException('O servidor está encerrando.');
     const config = await this.sync(now);
     if (!manual && !(config.publicValues.schedulerEnabled && config.publicValues.jobEnabled)) return this.state();
@@ -75,14 +75,14 @@ export class CronService implements OnModuleInit, OnApplicationBootstrap, Before
     let failed = 0;
     try {
       // AI checks its configured children. Crons is intentionally excluded: no recursive scheduler checks.
-      const results = await Promise.allSettled(['pusher', 'internal_api', 'ai', 'smtp', 'storage_s3'].map(id => this.integrations.check(this.integrations.id(id), manual ? 'manual' : 'scheduler', actor)));
+      const results = await Promise.allSettled(['pusher', 'internal_api', 'ai', 'smtp', 'storage_s3'].map(id => this.integrations.check(this.integrations.id(id), manual ? 'manual' : 'scheduler', actor, simulation)));
       failed = results.filter(result => result.status === 'rejected' || result.value.state === 'error').length;
     } catch { failed++; }
     const message = failed ? `${failed} integração(ões) com falha na verificação.` : 'Verificação concluída. Integrações sem configuração foram ignoradas.';
     await this.states.updateOne({ id: HEALTH_CHECK_JOB_ID, lockedBy: owner }, { $set: {
       lockedUntil: null, lockedBy: null, lastFinishedAt: new Date(), lastStatus: failed ? 'error' : 'ok', message,
     } });
-    this.logger.info({ event: 'cron.finished', jobId: HEALTH_CHECK_JOB_ID, actor, failed }, message);
+    this.logger.info({ event: 'cron.finished', jobId: HEALTH_CHECK_JOB_ID, actor, failed, simulation }, message);
     return this.state();
   }
 }

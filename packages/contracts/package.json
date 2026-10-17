@@ -1,7 +1,19 @@
 {
-  "name": "@shekinah/contracts", "version": "0.0.0", "private": true, "type": "module",
-  "exports": { ".": "./src/index.ts" },
-  "scripts": { "typecheck": "tsc --noEmit" },
-  "dependencies": { "zod": "^4.3.0" },
-  "devDependencies": { "@shekinah/config": "workspace:*" }
+  "name": "@shekinah/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nandobfer/perfix": "github:nandobfer/Perfix#v0.1.0",
+    "zod": "^4.3.0"
+  },
+  "devDependencies": {
+    "@shekinah/config": "workspace:*"
+  }
 }

@@ -1,5 +1,9 @@
 # Integrações e verificação de status
 
+## Autorização granular
+
+Leituras, configuração, testes/debug e execução manual usam Perfix (`integrations.<id>.view/edit/explore`, `integrations.crons.run`), além da sessão. Listagem é filtrada no servidor; UI esconde ações e desabilita configuração em leitura. Teste agregado de IA exige verificação em todos os provedores. Scheduler segue interno. Auditoria mantém ator real e marcador de simulação, sem valores privados. Consulte [Permissionamento](./permissions.md).
+
 ## Implementado
 
 Catálogo público/validação/DTOs em `packages/contracts/src/integrations.ts`; cliente HTTP em `packages/api-client`; hooks/telas em `apps/admin/src/features/integrations`; módulo NestJS em `apps/api/src/modules/integrations`.

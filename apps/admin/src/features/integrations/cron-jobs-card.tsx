@@ -12,12 +12,15 @@ import { cn } from '@/lib/utils';
 import { useRunHealthCheck } from './hooks';
 import { formatDate } from './integration-feedback';
 import { cardMotion } from './public-fields-card';
+import { usePermissions } from '../users/hooks/usePermissions';
 
 export function CronJobsCard({ state, dirty, values, setValue, disabled }: {
   state?: CronState; dirty: boolean; values: Record<string, PublicValue>;
   setValue: (key: string, value: PublicValue) => void; disabled: boolean;
 }) {
   const run = useRunHealthCheck();
+  const { can } = usePermissions();
+  const readOnly = disabled || !can('integrations.crons.edit');
   const [open, setOpen] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [term, setTerm] = useState('');
@@ -34,10 +37,10 @@ export function CronJobsCard({ state, dirty, values, setValue, disabled }: {
             <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="flex min-w-0 flex-1 items-center gap-2 rounded-md text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary">
               <span className="truncate font-medium">{HEALTH_CHECK_JOB_LABEL}</span><ChevronDown className={cn('h-4 w-4 shrink-0 text-muted-foreground transition-transform', open && 'rotate-180')} aria-hidden />
             </button>
-            <Button type="button" variant="outline" size="sm" className="h-8" aria-label={`Executar agora: ${HEALTH_CHECK_JOB_LABEL}`} disabled={disabled || dirty || run.isPending || state?.running} title={dirty ? 'Salve as alterações antes de executar' : state?.running ? 'A rotina já está em execução' : undefined} onClick={() => setConfirm(true)}>
+            {can('integrations.crons.run') && <Button type="button" variant="outline" size="sm" className="h-8" aria-label={`Executar agora: ${HEALTH_CHECK_JOB_LABEL}`} disabled={disabled || dirty || run.isPending || state?.running} title={dirty ? 'Salve as alterações antes de executar' : state?.running ? 'A rotina já está em execução' : undefined} onClick={() => setConfirm(true)}>
               {run.isPending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Play className="mr-1.5 h-3.5 w-3.5" />}Executar agora
-            </Button>
-            <Switch checked={enabled} onCheckedChange={value => setValue('jobEnabled', value)} disabled={disabled} aria-label={`Ativar ${HEALTH_CHECK_JOB_LABEL}`} />
+            </Button>}
+            <Switch checked={enabled} onCheckedChange={value => setValue('jobEnabled', value)} disabled={readOnly} aria-label={`Ativar ${HEALTH_CHECK_JOB_LABEL}`} />
           </div>
           <div className="mt-2 pl-6"><span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             {state?.running || run.isPending ? <span className="flex items-center gap-1 text-sky-600"><Loader2 className="h-3.5 w-3.5 animate-spin" />Executando</span>
@@ -49,9 +52,9 @@ export function CronJobsCard({ state, dirty, values, setValue, disabled }: {
           <AnimatePresence initial={false}>{open && <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="overflow-hidden">
             <div className="space-y-4 pt-4"><div className="space-y-3"><div className="flex flex-col gap-2 sm:flex-row sm:items-center" data-testid="schedule-row">
               <Select value="interval" disabled><SelectTrigger className="w-full min-w-0 sm:flex-1" aria-label="Frequência"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="interval">A cada intervalo</SelectItem></SelectContent></Select>
-              <Input type="number" min={1} max={unit === 'hours' ? 24 : 1440} className="w-full min-w-0 sm:flex-1" aria-label="Intervalo" value={unit === 'hours' ? minutes / 60 : minutes} disabled={disabled}
+              <Input type="number" min={1} max={unit === 'hours' ? 24 : 1440} className="w-full min-w-0 sm:flex-1" aria-label="Intervalo" value={unit === 'hours' ? minutes / 60 : minutes} disabled={readOnly}
                 onChange={event => setValue('intervalMinutes', Number(event.target.value) * (unit === 'hours' ? 60 : 1))} />
-              <Select value={unit} onValueChange={next => setValue('intervalMinutes', next === 'hours' ? Math.min(1440, (unit === 'hours' ? minutes / 60 : minutes) * 60) : unit === 'hours' ? minutes / 60 : minutes)} disabled={disabled}>
+              <Select value={unit} onValueChange={next => setValue('intervalMinutes', next === 'hours' ? Math.min(1440, (unit === 'hours' ? minutes / 60 : minutes) * 60) : unit === 'hours' ? minutes / 60 : minutes)} disabled={readOnly}>
                 <SelectTrigger className="w-full min-w-0 sm:flex-1" aria-label="Unidade"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="minutes">minutos</SelectItem><SelectItem value="hours">horas</SelectItem></SelectContent>
               </Select>
             </div><p className="text-xs text-muted-foreground">A cada {minutes} minutos</p></div></div>

@@ -10,9 +10,11 @@ import { TableAction } from '@/components/list/TableAction';
 import { useIntegrations } from './hooks';
 import { IntegrationError, IntegrationStatusDot } from './integration-feedback';
 import { IntegrationTestDialog } from './integration-dialogs';
+import { usePermissions } from '../users/hooks/usePermissions';
 
 export function AiProvidersCard() {
   const query = useIntegrations();
+  const { can } = usePermissions();
   const providers = query.data?.filter(item => item.parent === 'ai') ?? [];
   const [testing, setTesting] = useState<IntegrationId | null>(null);
   return <Card>
@@ -28,7 +30,7 @@ export function AiProvidersCard() {
               <span className="flex items-center gap-2 font-medium">{provider.name}{!provider.configured && <Badge variant="outline" className="text-[10px] font-normal text-muted-foreground">Não configurado</Badge>}</span>
               <span className="block truncate text-xs text-muted-foreground" title={provider.description}>{provider.description}</span>
             </span><ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden /></Link>
-            <TableAction type="test" onClick={() => setTesting(provider.id)} />
+            {can(`integrations.${provider.id}.explore`) && <TableAction type="test" onClick={() => setTesting(provider.id)} />}
           </motion.li>)}
         </motion.ul>}
     </CardContent>

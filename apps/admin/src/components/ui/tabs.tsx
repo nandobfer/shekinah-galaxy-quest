@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils"
 
 interface TabsContextValue {
   value: string
+  baseId: string
   onValueChange: (value: string) => void
 }
 
@@ -24,6 +25,7 @@ interface TabsProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
   ({ defaultValue, value: controlledValue, onValueChange, className, ...props }, ref) => {
+    const baseId = React.useId()
     const [internalValue, setInternalValue] = React.useState(defaultValue || "")
     const value = controlledValue ?? internalValue
 
@@ -36,7 +38,7 @@ const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
     )
 
     return (
-      <TabsContext.Provider value={{ value, onValueChange: handleValueChange }}>
+      <TabsContext.Provider value={{ value, baseId, onValueChange: handleValueChange }}>
         <div ref={ref} className={cn("w-full", className)} {...props} />
       </TabsContext.Provider>
     )
@@ -47,9 +49,24 @@ Tabs.displayName = "Tabs"
 const TabsList = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
+>(({ className, onKeyDown, ...props }, ref) => (
   <div
     ref={ref}
+    role="tablist"
+    onKeyDown={event => {
+      onKeyDown?.(event)
+      if (event.defaultPrevented) return
+      const vertical = event.currentTarget.getAttribute('aria-orientation') === 'vertical'
+      const previous = vertical ? 'ArrowUp' : 'ArrowLeft'
+      const next = vertical ? 'ArrowDown' : 'ArrowRight'
+      if (![previous, next, 'Home', 'End'].includes(event.key)) return
+      const tabs = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]:not(:disabled)'))
+      const current = tabs.findIndex(tab => tab === document.activeElement)
+      if (current < 0 || !tabs.length) return
+      event.preventDefault()
+      const index = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (current + (event.key === next ? 1 : -1) + tabs.length) % tabs.length
+      tabs[index]?.focus(); tabs[index]?.click()
+    }}
     className={cn(
       "inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground",
       className
@@ -65,7 +82,7 @@ interface TabsTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement>
 
 const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>(
   ({ className, value: triggerValue, ...props }, ref) => {
-    const { value, onValueChange } = useTabsContext()
+    const { value, baseId, onValueChange } = useTabsContext()
     const isActive = value === triggerValue
 
     return (
@@ -73,6 +90,9 @@ const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>(
         ref={ref}
         type="button"
         role="tab"
+        id={`${baseId}-tab-${triggerValue}`}
+        aria-controls={`${baseId}-panel-${triggerValue}`}
+        tabIndex={isActive ? 0 : -1}
         aria-selected={isActive}
         onClick={() => onValueChange(triggerValue)}
         className={cn(
@@ -95,7 +115,7 @@ interface TabsContentProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const TabsContent = React.forwardRef<HTMLDivElement, TabsContentProps>(
   ({ className, value: contentValue, ...props }, ref) => {
-    const { value } = useTabsContext()
+    const { value, baseId } = useTabsContext()
     const isActive = value === contentValue
 
     if (!isActive) return null
@@ -104,6 +124,9 @@ const TabsContent = React.forwardRef<HTMLDivElement, TabsContentProps>(
       <div
         ref={ref}
         role="tabpanel"
+        id={`${baseId}-panel-${contentValue}`}
+        aria-labelledby={`${baseId}-tab-${contentValue}`}
+        tabIndex={0}
         className={cn(
           "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
           className

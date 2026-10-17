@@ -7,7 +7,7 @@ import { App } from '../../../app/app';
 import { api, queryClient } from '../../auth/session';
 
 vi.mock('@shekinah/api-client', () => ({ createApiClient: () => ({ session: vi.fn(), logout: vi.fn(), login: vi.fn(), integrations: { list: vi.fn(), detail: vi.fn(), save: vi.fn(), logs: vi.fn(), test: vi.fn(), runHealthCheck: vi.fn() } }) }));
-const session = { user: { id: '1', name: 'Fernando Teste', email: 'operator@example.test', role: 'admin' as const }, expires: '2030-01-01T00:00:00.000Z' };
+const session = { user: { id: '1', name: 'Fernando Teste', email: 'operator@example.test', role: 'admin' as const }, expires: '2030-01-01T00:00:00.000Z', access: { permissions: ['*'], roles: [], realIsAdministrator: true, simulation: null } };
 function fixture(id: IntegrationId): Integration {
   const def = INTEGRATIONS.find(item => item.id === id)!;
   return { id, name: def.name, description: def.description, ...(def.parent ? { parent: def.parent } : {}), environment: def.environment,
@@ -19,7 +19,7 @@ function fixture(id: IntegrationId): Integration {
   };
 }
 beforeEach(() => {
-  queryClient.clear(); vi.resetAllMocks();
+  queryClient.clear(); vi.resetAllMocks(); sessionStorage.clear();
   Object.defineProperty(window, 'innerWidth', { value: 1280, writable: true });
   window.history.replaceState({}, '', '/');
   vi.mocked(api.session).mockResolvedValue(session);
@@ -34,11 +34,11 @@ function setup(path = '/') {
   return userEvent.setup();
 }
 describe('layout e navegação', () => {
-  it('tem somente Início e Integrações no menu, marca ativo e navega preservando layout', async () => {
+  it('inclui Usuários e Perfis no menu autorizado, marca ativo e preserva layout', async () => {
     const user = setup();
     expect(await screen.findByRole('heading', { name: 'Início' })).toBeTruthy();
     const nav = screen.getByRole('navigation', { name: 'Menu principal' });
-    expect(within(nav).getAllByRole('link')).toHaveLength(2);
+    expect(within(nav).getAllByRole('link')).toHaveLength(4);
     expect(within(nav).getByRole('link', { name: 'Início' }).getAttribute('aria-current')).toBe('page');
     await user.click(within(nav).getByRole('link', { name: 'Integrações' }));
     expect(await screen.findByRole('heading', { name: 'Integrações' })).toBeTruthy();

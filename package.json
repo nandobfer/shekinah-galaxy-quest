@@ -1,10 +1,12 @@
 {
   "name": "shekinah-galaxy-quest",
-  "version": "0.3.4",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.4.0",
-  "engines": { "node": ">=22.12" },
+  "engines": {
+    "node": ">=22.12"
+  },
   "scripts": {
     "dev:api": "pnpm --filter @shekinah/api dev",
     "dev:admin": "pnpm --filter @shekinah/admin dev",

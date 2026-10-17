@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { z } from 'zod';
 import { loginSchema, sessionSchema, integrationSchema, integrationPatchSchema, integrationHealthSchema, integrationLogSchema, cronStateSchema, type IntegrationId, type IntegrationPatch, type LoginInput } from '@shekinah/contracts';
+import { rolesResponseSchema, roleInputSchema, roleUpdateSchema, roleReorderSchema, roleMembersSchema, adminUserDtoSchema, assignableRoleSchema, effectiveRoleSchema, userAccessUpdateSchema, viewAsEventSchema, type RoleInput } from '@shekinah/contracts';
 
 export class AuthError extends Error {
   constructor(public readonly code: 'credentials' | 'unavailable' | 'rate_limit' | 'session') {
@@ -8,10 +9,18 @@ export class AuthError extends Error {
   }
 }
 
-export function createApiClient(options: { baseURL?: string; onUnauthorized?: () => void } = {}) {
+export function createApiClient(options: { baseURL?: string; onUnauthorized?: () => void; headers?: () => Record<string, string>; onForbidden?: (code?: string) => void } = {}) {
   const http = axios.create({ baseURL: options.baseURL ?? '/api/v1', timeout: 15000, withCredentials: true });
+  http.interceptors.request.use(config => {
+    for (const [key, value] of Object.entries(options.headers?.() ?? {})) if (!config.headers.has(key)) config.headers.set(key, value);
+    return config;
+  });
   http.interceptors.response.use(undefined, (error: unknown) => {
     if (axios.isAxiosError(error) && error.response?.status === 401) options.onUnauthorized?.();
+    if (axios.isAxiosError(error) && error.response?.status === 403) {
+      const parsed = z.object({ error: z.object({ code: z.string() }).optional() }).safeParse(error.response.data);
+      options.onForbidden?.(parsed.success ? parsed.data.error?.code : undefined);
+    }
     return Promise.reject(error);
   });
   const csrf = async () => z.object({ csrfToken: z.string().min(1) }).parse((await http.get('/auth/csrf')).data).csrfToken;
@@ -29,6 +38,21 @@ export function createApiClient(options: { baseURL?: string; onUnauthorized?: ()
     }
   }
   return {
+    permissions: {
+      roles: (signal?: AbortSignal) => integrationRequest(async () => rolesResponseSchema.parse((await http.get('/roles', { signal })).data)),
+      createRole: (data: RoleInput) => integrationRequest(async () => z.object({ id: z.string() }).parse((await http.post('/roles', roleInputSchema.parse(data), { headers: mutationHeaders })).data)),
+      updateRole: (id: string, data: z.infer<typeof roleUpdateSchema>) => integrationRequest(async () => z.object({ id: z.string() }).parse((await http.patch(`/roles/${id}`, roleUpdateSchema.parse(data), { headers: mutationHeaders })).data)),
+      deleteRole: (id: string, version: number) => integrationRequest(async () => { await http.delete(`/roles/${id}`, { params: { version }, headers: mutationHeaders }); }),
+      reorder: (data: z.infer<typeof roleReorderSchema>) => integrationRequest(async () => { await http.put('/roles/reorder', roleReorderSchema.parse(data), { headers: mutationHeaders }); }),
+      members: (id: string, data: z.infer<typeof roleMembersSchema>) => integrationRequest(async () => { await http.put(`/roles/${id}/members`, roleMembersSchema.parse(data), { headers: mutationHeaders }); }),
+      users: (signal?: AbortSignal) => integrationRequest(async () => z.array(adminUserDtoSchema).parse((await http.get('/users', { signal })).data)),
+      assignable: (signal?: AbortSignal) => integrationRequest(async () => z.array(assignableRoleSchema).parse((await http.get('/users/assignable-roles', { signal })).data)),
+      updateUser: (id: string, data: z.infer<typeof userAccessUpdateSchema>) => integrationRequest(async () => { await http.patch(`/users/${id}`, userAccessUpdateSchema.parse(data), { headers: mutationHeaders }); }),
+      deleteUser: (id: string, version: number) => integrationRequest(async () => { await http.delete(`/users/${id}`, { params: { version }, headers: mutationHeaders }); }),
+      viewRoles: (signal?: AbortSignal) => integrationRequest(async () => z.array(effectiveRoleSchema).parse((await http.get('/view-as/roles', { signal, headers: { 'x-perfix-view-as': 'none' } })).data)),
+      viewUsers: (q: string, signal?: AbortSignal) => integrationRequest(async () => z.array(adminUserDtoSchema.pick({ id: true, nome: true, email: true, cargos: true })).parse((await http.get('/view-as/users', { params: { q }, signal, headers: { 'x-perfix-view-as': 'none' } })).data)),
+      viewEvent: (data: z.infer<typeof viewAsEventSchema>) => integrationRequest(async () => { await http.post('/view-as/events', viewAsEventSchema.parse(data), { headers: { ...mutationHeaders, 'x-perfix-view-as': 'none' } }); }),
+    },
     integrations: {
       list: (signal?: AbortSignal) => integrationRequest(async () => z.array(integrationSchema).parse((await http.get('/integrations', { signal })).data)),
       detail: (id: IntegrationId, signal?: AbortSignal) => integrationRequest(async () => integrationSchema.parse((await http.get(`/integrations/${id}`, { signal })).data)),

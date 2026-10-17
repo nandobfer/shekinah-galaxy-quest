@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { APP_NAV, isActiveHref } from './navigation';
 import { version } from '../../../../../package.json';
+import { INTEGRATIONS } from '@shekinah/contracts';
+import { usePermissions } from '../users/hooks/usePermissions';
 
 const focusRing = 'outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/80';
 export function initials(name: string) {
@@ -18,6 +20,8 @@ interface SidebarProps { collapsed: boolean; name: string; onNavigate: () => voi
 export function AppSidebar({ collapsed, name, onNavigate, onClose, logout, loggingOut }: SidebarProps) {
   const { pathname } = useLocation();
   const reduceMotion = useReducedMotion();
+  const { can, canAny } = usePermissions();
+  const navigation = APP_NAV.filter(item => item.href === '/' || (item.href === '/usuarios' ? can('users.view') : item.href === '/perfis' ? can('roles.view') : canAny(INTEGRATIONS.map(integration => `integrations.${integration.id}.view`))));
   const logoutButton = <Button variant="ghost" className="w-full justify-start" onClick={logout} disabled={loggingOut}><LogOut className="h-4 w-4" />{loggingOut ? 'Saindo…' : 'Sair'}</Button>;
   return <motion.aside animate={{ width: collapsed ? 68 : 240 }} transition={{ duration: reduceMotion ? 0 : 0.22, ease: 'easeOut' }} className="flex h-full shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
     <div className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-sidebar-border px-3">
@@ -28,7 +32,7 @@ export function AppSidebar({ collapsed, name, onNavigate, onClose, logout, loggi
       {onClose && <button type="button" onClick={onClose} aria-label="Fechar menu" className={cn('rounded-[4px] p-1.5 opacity-80 hover:bg-sidebar-accent', focusRing)}><X className="h-4 w-4" /></button>}
     </div>
     <nav aria-label="Menu principal" className="min-h-0 flex-1 space-y-3 overflow-y-auto px-2 py-3"><TooltipProvider delayDuration={150}><ul className="space-y-1">
-      {APP_NAV.map(item => {
+      {navigation.map(item => {
         const active = isActiveHref(pathname, item.href);
         const link = <Link to={item.href} onClick={onNavigate} aria-label={collapsed ? item.label : undefined} aria-current={active ? 'page' : undefined} className={cn('block rounded-[4px]', focusRing)}>
           <motion.div initial={{ opacity: 0, x: reduceMotion ? 0 : -8 }} animate={{ opacity: 1, x: 0 }} whileHover={reduceMotion ? undefined : { x: 4 }} whileTap={reduceMotion ? undefined : { scale: 0.98 }} className={cn('relative flex w-full items-center gap-3 rounded-[4px] px-3 py-2 text-sm transition-colors', active ? 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground' : 'text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground', collapsed && 'justify-center px-0 py-2.5')}>

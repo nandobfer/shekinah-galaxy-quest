@@ -106,13 +106,25 @@ describe('Auth.js real integrado ao NestJS', () => {
     const response = await login(agent());
     expect(new URL(response.body.url).searchParams.get('error')).toBe('CredentialsSignin');
   });
-  it('invalida sessão com versão alterada e não aceita papel não administrativo', async () => {
+  it('invalida versão de sessão e não transforma o marcador legado de papel em autoridade', async () => {
     const client = agent(); await login(client);
     await model.updateOne({ email: credentials.email }, { $inc: { sessionVersion: 1 } });
     await client.get('/api/v1/me').expect(401);
-    // Simula um documento legado/corrompido, não uma nova regra de domínio.
-    await model.collection.updateOne({ email: credentials.email }, { $set: { role: 'member' } });
-    expect(new URL((await login(agent())).body.url).searchParams.get('error')).toBe('CredentialsSignin');
+    // A autenticação identifica a conta; somente seus perfis ativos concedem acesso.
+    await model.collection.updateOne({ email: credentials.email }, { $set: { role: 'member', roles: [] } });
+    const limited = agent(); await login(limited);
+    const me = sessionSchema.parse((await limited.get('/api/v1/me').expect(200)).body);
+    expect(me.access).toMatchObject({ permissions: [], realIsAdministrator: false });
+    await limited.get('/api/v1/roles').expect(403);
+  });
+  it('MongoDB standalone mantém login e leituras, mas recusa mutações de autoridade sem gravar parcialmente', async () => {
+    const client = agent(); await login(client);
+    const before = (await client.get('/api/v1/roles').expect(200)).body;
+    const response = await client.post('/api/v1/roles').set('Origin', origin).set('X-Shekinah-Request', '1')
+      .send({ nome: 'Não persistir', descricao: '', cor: 'roxo', ativo: true, escopos: [], permissoes: [] }).expect(503);
+    expect(JSON.stringify(response.body)).toContain('replica set');
+    expect((await client.get('/api/v1/roles').expect(200)).body).toEqual(before);
+    expect(await model.countDocuments()).toBe(1);
   });
   it('recusa origem externa e não permite bypass de CSRF', async () => {
     const client = agent();

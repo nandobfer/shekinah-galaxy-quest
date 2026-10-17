@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, Inject, Injectable, NotFoundExc
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, Model } from 'mongoose';
 import { INTEGRATIONS, fieldVisible, integrationDefinition, integrationIdSchema, integrationPatchSchema, integrationValuesSchema,
-  type Integration, type IntegrationHealth, type IntegrationId, type PublicValue } from '@shekinah/contracts';
+  type Access, type Integration, type IntegrationHealth, type IntegrationId, type PublicValue } from '@shekinah/contracts';
 import { CONFIG, type AppConfig } from '../../config.js';
 import { createLogger } from '../../logger.js';
 import { openapi } from '../../openapi.js';
@@ -76,7 +76,7 @@ export class IntegrationsService implements OnModuleInit {
     };
   }
   list() { return Promise.all(INTEGRATIONS.map(def => this.detail(def.id))); }
-  async save(id: IntegrationId, body: unknown, actor: string) {
+  async save(id: IntegrationId, body: unknown, actor: string, simulation?: Access['simulation']) {
     const parsed = integrationPatchSchema.safeParse(body);
     if (!parsed.success) throw new BadRequestException('Configuração inválida.');
     const input = parsed.data;
@@ -96,17 +96,17 @@ export class IntegrationsService implements OnModuleInit {
     const changedFields = [...Object.keys(input.publicValues), ...Object.keys(input.secrets), 'environment', 'debugMode'];
     const result = await this.records.updateOne({ id, version: input.version }, {
       $set: { publicValues: { ...record?.publicValues, ...values.data }, secrets, environment: input.environment, debugMode: input.debugMode, updatedAt: new Date(), health: null },
-      $inc: { version: 1 }, $push: { audit: { $each: [{ at: new Date(), actor, action: 'configuration.updated', fields: changedFields }], $slice: -200 } },
+      $inc: { version: 1 }, $push: { audit: { $each: [{ at: new Date(), actor, action: 'configuration.updated', fields: changedFields, simulation }], $slice: -200 } },
     });
     if (!result.modifiedCount) throw new ConflictException('Esta configuração foi alterada. Recarregue antes de salvar.');
-    this.logger.info({ event: 'integration.updated', integrationId: id, actor, fields: changedFields }, 'Configuração de integração alterada');
+    this.logger.info({ event: 'integration.updated', integrationId: id, actor, fields: changedFields, simulation }, 'Configuração de integração alterada');
     return this.detail(id);
   }
   async logs(id: IntegrationId) {
     return (await this.debug.find({ integrationId: id, at: { $gte: new Date(Date.now() - 172800000) } }).sort({ at: -1 }).limit(100).lean())
       .map(log => ({ at: log.at.toISOString(), level: log.level, source: log.source, message: log.message }));
   }
-  async check(id: IntegrationId, source: 'manual' | 'scheduler', actor: string): Promise<IntegrationHealth> {
+  async check(id: IntegrationId, source: 'manual' | 'scheduler', actor: string, simulation?: Access['simulation']): Promise<IntegrationHealth> {
     await this.ensure(id);
     const snapshot = await this.detail(id);
     const { values, secrets } = await this.resolved(id);
@@ -124,7 +124,7 @@ export class IntegrationsService implements OnModuleInit {
           message = 'NestJS ativo, MongoDB acessível e contrato OpenAPI 3.x disponível.';
         } else if (id === 'crons') message = 'Agendador ativo. Consulte o estado das rotinas.';
         else if (id === 'ai') {
-          const children = await Promise.all(INTEGRATIONS.filter(def => def.parent === 'ai').map(def => this.check(def.id, source, actor)));
+          const children = await Promise.all(INTEGRATIONS.filter(def => def.parent === 'ai').map(def => this.check(def.id, source, actor, simulation)));
           const configured = children.filter(health => health.state !== 'not_configured');
           if (configured.some(health => health.state === 'error')) throw new CheckFailure('Um ou mais provedores configurados estão indisponíveis.');
           message = `${configured.length} provedor(es) conectado(s).`;
@@ -145,7 +145,7 @@ export class IntegrationsService implements OnModuleInit {
     health.latencyMs = Date.now() - started;
     // A test from an old configuration must never overwrite the status of a newer one.
     const result = await this.records.updateOne({ id, version: snapshot.version }, {
-      $set: { health }, $push: { audit: { $each: [{ at: new Date(), actor, action: `connection.checked.${source}`, fields: [] }], $slice: -200 } },
+      $set: { health }, $push: { audit: { $each: [{ at: new Date(), actor, action: `connection.checked.${source}`, fields: [], simulation }], $slice: -200 } },
     });
     if (!result.modifiedCount) throw new ConflictException('Configuração alterada durante a verificação. Teste novamente.');
     if (snapshot.debugMode) await this.debug.create({ integrationId: id, at: new Date(), level: health.state === 'error' ? 'error' : 'info', message: health.message, source });

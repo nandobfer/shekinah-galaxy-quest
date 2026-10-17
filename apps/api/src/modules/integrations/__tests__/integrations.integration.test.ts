@@ -49,6 +49,11 @@ beforeEach(async () => {
 const mutation = (path: string) => client.post(`/api/v1/${path}`).set('Origin', origin).set('X-Shekinah-Request', '1');
 
 describe('integrações: autorização, contratos e segredos', () => {
+  it('recusa mutações de autoridade em standalone sem aplicar alteração', async () => {
+    const response = await client.post('/api/v1/roles').set('Origin', origin).set('X-Shekinah-Request', '1').send({ nome: 'Teste standalone', descricao: '', cor: 'roxo', ativo: true, permissoes: [], escopos: [] }).expect(503);
+    expect(response.body.message).toContain('replica set');
+    expect((await client.get('/api/v1/roles')).body.roles).toHaveLength(1);
+  });
   it('protege leitura, OpenAPI, logs, edição, testes e execução manual', async () => {
     const anonymous = request(app.getHttpServer());
     for (const path of ['integrations', 'integrations/pusher', 'integrations/pusher/logs', 'openapi.json']) await anonymous.get(`/api/v1/${path}`).expect(401);

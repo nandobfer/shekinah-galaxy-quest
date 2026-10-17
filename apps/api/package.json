@@ -11,6 +11,7 @@
   "dependencies": {
     "@auth/core": "^0.41.0",
     "@aws-sdk/client-s3": "^3.1152.0",
+    "@nandobfer/perfix": "github:nandobfer/Perfix#v0.1.0",
     "@nestjs/common": "^11.1.0",
     "@nestjs/core": "^11.1.0",
     "@nestjs/mongoose": "^11.0.0",

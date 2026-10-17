@@ -7,6 +7,9 @@
 - Copie `.env.example` para `.env`, ajuste MONGODB_URI e APP_ORIGIN e gere AUTH_SECRET com `openssl rand -base64 48`. Não publique o resultado.
 - O MongoDB deve estar disponível e a URI deve incluir um banco dedicado. Este bootstrap **não** altera, inicia ou provisiona o MongoDB compartilhado; não há usuário administrador inicial.
 - Foi detectado MongoDB local na porta 27017, mas sua autenticação/topologia não é presumida. Nenhuma credencial anterior foi reutilizada. Serviços antigos com nome Shekinah não são gerenciados por este Compose.
+- O MongoDB compartilhado atualmente em uso é **standalone** (sem replica set). Login e leituras funcionam; administração de perfis/usuários e a migração de acessos respondem 503/recusa até existir replica set (`--replSet` + `rs.initiate()`). Converter o serviço existente preserva os dados (o `/data/db` é bind mount), mas é alteração de infraestrutura compartilhada e exige autorização.
+- URI de replica set de um nó único pela rede Docker e scripts no host exigem atenção: a descoberta de topologia devolve o hostname do membro. Se o membro for anunciado como `mongodb:27017`, scripts no host precisam de `127.0.0.1` + `directConnection=true` no `MONGODB_URI`.
+- Ao habilitar replica set com autenticação, o `mongod` **recusa iniciar** sem `--keyFile` ("security.keyFile is required when authorization is enabled with replica sets"), mesmo em nó único. O arquivo precisa ser acessível ao usuário `mongodb` (modo 400) e pode ficar no volume montado em `/data/configdb`; o contêiner em uso roda `mongod --auth --bind_ip_all --replSet rs0 --keyFile /data/configdb/mongo-keyfile` com o membro anunciado como `mongodb:27017`.
 
 ## Desenvolvimento
 

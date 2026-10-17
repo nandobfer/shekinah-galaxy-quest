@@ -3,24 +3,24 @@
 ## Implementado
 
 - API NestJS com Auth.js Core, Credentials e sessão JWE em cookie; sem Next.js e sem bearer JWT convencional.
-- Usuários persistidos com Mongoose: nome, e-mail normalizado com índice único, hash Argon2id, papel `admin`, status ativo, versão de sessão e timestamps.
-- Login `/login` no React/Vite; rotas protegidas usam layout com Início e Integrações, nome e logout no rodapé da sidebar. Consulte `layout.md` e `integrations.md`.
+- Usuários persistidos com Mongoose: nome, e-mail normalizado com índice único, hash Argon2id, status ativo, versões de sessão/acesso e IDs dos perfis. `role: 'admin'` é compatibilidade, não autorização; consulte `permissions.md`.
+- Login `/login` no React/Vite; layout tem Início, Usuários, Perfis e Integrações conforme permissões, com nome/logout no rodapé. Consulte `layout.md`, `permissions.md` e `integrations.md`.
 - A tela de login reproduz a composição do Opex (card central translúcido, fundo radial, tema roxo e fonte Inter), com identidade Shekinah e e-mail/senha. O fundo de partículas virou uma galáxia espiral (braços ao redor de um núcleo, sem ligações, rotação lenta), conforme a tarefa SGQ-1. `login-page.tsx` separa layout/carregamento lazy do canvas de `login-form.tsx`, que mantém contratos, mutation e sessão atuais. Não há username ou autenticação por credenciais de ambiente do Opex.
 - Não há cadastro público, senha padrão, administrador automático, recuperação de senha ou autenticação mobile nesta entrega.
 
 ## Protocolo e autorização
 
 - Base Auth.js: `/api/v1/auth`; login usa `GET /csrf` e `POST /callback/credentials`, logout usa `POST /signout`. Preserve o protocolo oficial, incluindo token CSRF e cookies múltiplos.
-- `GET /api/v1/me` exige sessão administrativa; retorna `{ user: { id, name, email, role }, expires }`. `GET /api/v1/openapi.json` documenta endpoints REST próprios; endpoints Auth.js seguem a documentação oficial.
+- `GET /api/v1/me` exige sessão ativa; retorna `{ user: { id, name, email, role }, expires, access }`, incluindo permissões/perfis efetivos, indicador de administrador real e simulação. OpenAPI exige `integrations.internal_api.view`; Auth.js segue seu protocolo oficial.
 - O bridge reconstrói a URL pela `APP_ORIGIN` configurada, não pelo Host recebido. Requisições POST exigem Origin exata; cookies usam HttpOnly/SameSite do Auth.js, Secure em produção.
-- O callback JWT consulta o usuário atual no MongoDB. Usuário inativo, papel inválido ou versão diferente invalida a sessão, inclusive em `/me`.
-- O guard é global no AppModule: novas rotas REST são protegidas por padrão; somente health tem exceção pública explícita. OpenAPI exige sessão administrativa. O bridge Auth.js atende seu próprio protocolo antes do roteamento Nest.
+- O callback JWT consulta o usuário atual no MongoDB: inatividade ou versão de sessão diferente invalida a sessão. O guard resolve autorização pelo Perfix a cada requisição; autenticação não implica administrar o sistema.
+- O guard global exige autenticação nas novas rotas REST; cada capacidade exige autorização explícita pelo serviço de acessos. Somente health tem exceção pública. O bridge Auth.js atende seu protocolo antes do Nest.
 - `/me` propaga a renovação/limpeza dos cookies do Auth.js e usa Cache-Control no-store. A sessão expira por inatividade conforme SESSION_MAX_AGE_SECONDS, sem guardar tokens no JavaScript do cliente.
 - Logout incrementa a versão de sessão: **encerra todas as sessões daquele administrador**, além de limpar o cookie atual. Essa decisão favorece revogação efetiva neste bootstrap.
 - Mutações de autenticação (exceto logout) têm limite por IP, em memória e por processo; variantes do caminho não escapam da contagem. Não há confiança automática em X-Forwarded-For. Com múltiplas réplicas ou proxy com IPs compartilhados, revisar explicitamente o armazenamento do limite e a política de proxies.
 - Não existe CORS permissivo: navegador e API usam a mesma origem por proxy. Mudanças de origem/portas exigem ajustar APP_ORIGIN.
 - Senhas não são aparadas/normalizadas; e-mails são. Erro genérico não diferencia e-mail inexistente, inatividade ou senha errada. Verificação dummy reduz diferença de custo entre contas existentes e inexistentes.
-- Auditoria estruturada registra criação pelo operador CLI, login e logout com IDs, nunca senha/hash/cookie. O histórico durável de auditoria é evolução futura; nesta entrega os eventos são logs Pino.
+- Criação pelo CLI, login e logout são auditados em logs Pino, nunca senha/hash/cookie. Perfis/atribuições têm auditoria durável própria em `access_audit`.
 - Queries não repetem falhas automaticamente; login/logout não têm retry. `401` limpa o cache protegido. Sessão é revalidada no foco e periodicamente; API continua sendo a autoridade em todas as requisições.
 
 ## Cadastro por operador
@@ -31,7 +31,7 @@ O script lê `.env`, exige terminal interativo e solicita nome/e-mail/senha/conf
 
 Antes da conexão, reutiliza `resolveScriptMongoUri` (`scripts/helpers/mongodb-uri.ts`) para substituir o hostname único `mongodb` por `127.0.0.1` na URI local. Não é necessário sobrescrever MONGODB_URI no comando quando o `.env` contém o nome desse contêiner; a porta precisa estar publicada no host com o mesmo número. O `.env` e a URI utilizada pela API não são alterados. URIs externas, SRV e replica sets permanecem intactas.
 
-Usa o mesmo serviço/hash da API, aguarda o índice único antes da inserção e fecha a conexão em sucesso/falha. E-mail duplicado não altera conta, papel ou senha. Não execute este script automaticamente no startup nem crie contas durante testes no banco real.
+Usa o mesmo serviço/hash da API, aguarda o índice único e fecha a conexão. Nova conta recebe o perfil Administrador do Perfix. Duplicadas não são alteradas. Contas antigas dependem da migração explícita em `permissions.md`. Não execute scripts no startup nem crie contas de teste no banco real.
 
 ## Testes e limites
 
